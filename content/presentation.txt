@@ -1,0 +1,1013 @@
+.. include:: <s5defs.txt>
+
+.. class:: big
+
+`JS for Java Developers`:orange:
+
+October 2009
+
+Dan McCallum
+
+TOC
+===
+
+.. class:: normal incremental
+
+1. JS. Um, uck.
+
+2. Syntax, Semantics, etc
+
+3. Inheritance
+
+4. Debugging
+
+5. Testing
+
+JS and dmccallum...
+===================
+
+`Not on speaking terms since 2000.`
+
+`Pretty much.`:small:
+=====================
+
+.. class:: center
+
+.. image:: images/comparative-analysis.jpg
+
+As Dr. Basman pointed out...
+=============================
+
+.. class:: tiny
+
+I think the most central result I want to report here is the truly fantastic expense of function calls in Javascript, which to my mind generally cuts at the heart of the possibility of orderly development.... Javascript sets back computer science 30 years or more...
+
+  -- `"How Long, Oh Lord?”`__
+
+  __ http://fluidproject.org/blog/2008/05/30/how-long-oh-lord/
+
+Don't think dmccallum nor Dr Basman are completely alone, here...
+=================================================================
+
+"Well, we could do X, or we could continue to stab ourselves with Javascript."
+==============================================================================
+
+  -- jbourey
+
+But there is this one really good book out there...
+===================================================
+
+*Javascript: The Good Parts*
+
+By `Douglas Crockford`__
+
+__ http://www.amazon.com/JavaScript-Good-Parts-Douglas-Crockford/dp/0596517742/ref=sr_1_1?ie=UTF8&s=books&qid=1254634809&sr=8-1
+
+Mostly, I'll be presenting high points from that book
+=====================================================
+
+`Come on guys, it's not *that* bad...`:small:
+=============================================
+
+.. class:: tiny
+
+In JavaScript, there is a beautiful, elegant, highly expressive language that is buried under a steaming pile of good intentions and blunders....The best nature of JavaScript is so effectively hidden that for many years the prevailing opinion of JavaScript was that it was an unsightly, incompetent toy....JavaScript is a block of marble, and I chip away the features that are not beautiful until the language's true nature reveals itself....The amazing thing about JavaScript is that it is possible to get work done with it without knowing much about the language, or even knowing much about programming.
+
+  -- `Crockford`__
+
+  __ http://www.amazon.com/JavaScript-Good-Parts-Douglas-Crockford/dp/0596517742/ref=sr_1_1?ie=UTF8&s=books&qid=1254634809&sr=8-1
+
+Those statements mostly match my experience...
+==============================================
+
+.. class:: small incremental
+
+`It's pretty easy to dive in once you find a way to set some boundaries for yourself.`
+
+`Fluid is particularly good at this.`
+
+`Syntax, Semantics, etc`:orange:
+================================
+
+Or,...
+======
+
+`Some of the bits that will drive Java developers nuts.`
+
+First some basics
+=================
+
+Variables - A few gotchas
+=========================
+
+Variables are global by default
+===============================
+
+.. class:: tiny incremental
+
+| function doMagic() {
+|   didMagic = true;
+| };
+| doMagic();
+| alert(didMagic);  // => true
+
+Use **var** to explicitly declare local variables
+=================================================
+
+.. class:: tiny incremental
+
+| didMagic = false;
+| function doMagic() {
+|   **var** didMagic = true;
+|   alert(didMagic);  // => true
+| };
+| doMagic();
+| alert(didMagic); // => false;
+
+`Vars are function scoped, not block scoped`:small:
+===================================================
+
+.. class:: tiny incremental
+
+| function doMagic() {
+|   alert(didMagic);  // => undefined
+|   if (true) {
+|     var didMagic = true;
+|   }
+|   alert(didMagic);  // => true
+| };
+| doMagic();
+| alert(didMagic);  // => error
+
+
+In Crockford, you always see **var** declarations
+=================================================
+
+You're generally advised to declare vars early
+==============================================
+
+`Which, of course, differs from the std J.Bloch Java advice.`
+
+Namespacing
+===========
+
+`In JS, basically refers to scoping all your code to some top-level object`
+
+`Will see namespaces injected into closures, e.g. for aliasing or testing`:small:
+=================================================================================
+
+.. class:: tiny incremental
+
+| var potterLib = potterLib || {};
+| (function($, fl) {
+|   var doMagic = function() {
+|     fl.magicComponent($('#selector').doMagic();
+|   }
+|   potterLib.doMagic = doMagic;
+|   $(document).ready(potterLib.doMagic);
+| })(jQuery, fluid_1_1);
+
+Objects
+=======
+
+`Basically, anything that's not a number, string, boolean, null, or undefined`
+
+Er...
+=====
+
+`Except all those things are also objects, you just cant change them.`
+`So, everything's an object, except not.`
+`<sigh>`
+
+Object literal syntax
+=====================
+
+.. class:: small incremental
+
+| var harry = {
+|   age: 11,
+|   wand: {
+|     core: 'PHOENIX_TAIL',
+|     casing: 'HOLLY'
+|   },
+|   "protected-by": 'MOTHERS_LOVE'
+| };
+
+Field access
+============
+
+.. class:: small incremental
+
+| `harry.age             // => 11`
+| `harry["protected-by"] // => 'MOTHERS_LOVE'`
+| `harry.wand.core       // => 'PHOENIX_TAIL'`
+| `harry['wand.core']    // => undefined`
+| `harry.nemesis         // => undefined`
+
+Can add and remove object fields at any time
+================================================
+
+.. class:: small incremental
+
+| `harry.age = 12`
+| `harry.nemesis = { name: voldemort }`
+
+Arrays
+======
+
+JS strikes again
+================
+
+.. class:: tiny
+
+Arrays can be very fast data structures. Unfortunately, JavaScript does not have anything like this kind of array.
+
+  -- `Crockford`__
+
+  __ http://www.amazon.com/JavaScript-Good-Parts-Douglas-Crockford/dp/0596517742/ref=sr_1_1?ie=UTF8&s=books&qid=1254634809&sr=8-1
+
+Array elements are just object fields with numeric names
+========================================================
+
+.. class:: small incremental
+
+| `var magicWords = ['abra','cadabra'];`
+| `alert(magicWords[0]);  // => 'abra'`
+| `alert(magicWords['0']);  // => 'abra'`
+
+That means you can't use **for in** to iterate over an array
+============================================================
+
+.. class:: small incremental
+
+`But the standard C for loop works just like you'd expect`
+
+Arrays have a, ahem, magic length property
+==========================================
+
+.. class:: tiny incremental
+
+| `var magicWords = ['abra','cadabra'];`
+| `alert(magicWords.length);  // => 2`
+| `var magicWords[3] = 'tada';`
+| `alert(magicWords.length);  // => 4`
+| `magicWords.length = 3;`
+| `alert(magicWords[3]);  // => undefined`
+| `magicWords.length = 4;`
+| `alert(magicWords[3]);  // => undefined`
+
+And arrays have all kinds of other useful methods
+=================================================
+
+`push()`
+`pop()`
+`splice()`
+`etc etc etc`
+
+Because arrays are JS objects, can do cool things like combine random access by index and name
+==============================================================================================
+
+.. class:: tiny incremental
+
+(thx, jbourey)
+
+For example
+===========
+
+.. class:: tiny incremental
+
+| var library = [];
+| var addToLibrary = function(book) {
+|   library.push(book);
+|   library[book.name] = book;
+| };
+| addToLibrary({name: "Philosopher's Stone", pages: 309});
+| alert(library[library.length - 1].pages);    // => 309
+| alert(library["Philosopher's Stone"].pages); // => 309
+
+A bit on types
+==============
+
+**typeof**
+==========
+
+.. class:: tiny incremental
+
+| `typeof {}   // => object`
+| `typeof 2    // => number`
+| `typeof '2'  // => string`
+| `typeof (1/0)  // => number (NaN)`
+| `typeof []   // => object (yikes)`
+| `typeof null // => object (yikes)`
+| `typeof undefined // => undefined`
+| `typeof function() {} // => function`
+| `typeof true // => boolean`
+
+So how do you figure out if something is an array?
+==================================================
+
+Option 1: Masochism
+===================
+
+.. class:: small incremental
+
+| function isArray(value) {
+|   return value &&
+|     typeof value === 'object'
+|     typeof value.length === 'number' &&
+|     typeof value.splice === 'function' &&
+|     !(value.propertyIsEnumerable('length'));
+| }
+
+Option 2: jQuery
+================
+
+.. class:: small incremental
+
+| var myArr = [];
+| var isArray = $.isArray(myArr);
+
+Booleans
+========
+
+Any JS expression can be evaluated as a boolean
+===============================================
+
+But there's booleans and then there's **booleans**
+==================================================
+
+`"Truthy" - anything that's not falsy`
+
+Falsy values
+============
+
+.. class:: small incremental
+
+| `false`
+| `null`
+| `undefined`
+| `''`
+| `0`
+| `NaN`
+
+(So 'false' is truthy)
+======================
+
+Relaxed boolean evaluation enables idiomatic field access
+=========================================================
+
+E.g. defaulting
+===============
+
+`return harry.nemesis || 'VOLDEMORT'`
+
+E.g. guarding
+=============
+
+`return harry.wand && harry.wand.created_by`
+
+But remember that expressions evaluated as booleans do not necessarily return booleans
+======================================================================================
+
+`So boolean returns will often be explicit`:small:
+==================================================
+
+.. class:: small incremental
+
+| function hasNemesis(harry) {
+|   return harry.nemesis \? true \: false\;
+| };
+
+`Or you can make things really confusing`:small:
+================================================
+
+.. class:: small incremental
+
+| function hasNemesis(harry) {
+|   return !(!(harry.nemesis));
+| };
+
+Equality
+========
+
+Pretty much like Java but not
+=============================
+
+.. class:: tiny
+
+Javascript has two sets of equality operators: === and !== and their evil twins == and !=.
+
+  -- `Crockford`__
+
+  __ http://www.amazon.com/JavaScript-Good-Parts-Douglas-Crockford/dp/0596517742/ref=sr_1_1?ie=UTF8&s=books&qid=1254634809&sr=8-1
+
+The evil twins are coercive and confusing
+=========================================
+
+.. class:: tiny incremental
+
+| `'' == '0'  // => false`
+| `0 == ''    // => true`
+
+There is no equals()
+====================
+
+`For reference types === is an identity test`
+
+*null* vs *undefined*
+=====================
+
+Never really been completely sure how best to use/choose these.
+===============================================================
+
+In fact, some resources will just tell you to think if them as interchangeable
+==============================================================================
+
+That happens to work b/c...
+===========================
+
+.. class:: tiny incremental
+
+| undefined == null;  // => true
+| // but...
+| undefined === null; // => false
+
+But really, *undefined* is intended to represent fields which do not exist
+==========================================================================
+
+.. class:: tiny incremental
+
+| var harry = {}
+| alert(typeof harry.nemesis); => undefined
+
+Or vars which have been declared but not assigned
+=================================================
+
+.. class:: tiny incremental
+
+| alert(harry);  => undefined
+| var harry = {};
+
+Args not specified by callers are *undefined*
+=============================================
+
+.. class:: tiny incremental
+
+| function doMagic(wand, subject) {
+|   alert("doing magic on " + subject);
+| };
+| doMagic({}); // => 'doing magic on undefined'
+
+*undefined* is also a (mutable!) global var
+===========================================
+
+.. class:: tiny incremental
+
+| `undefined = 'Gotcha!';`
+| `var minefield = undefined;`
+| `alert(minefield === undefined);  // => true`
+| `alert(typeof minefield === 'undefined');  // => false`
+
+*null* is intended to represent something which exists, but without value
+=========================================================================
+
+.. class:: tiny incremental
+
+| `Oh, and it's neither a type nor a global; it's a "built in value"`
+
+In general, use *undefined* tests for fine-grained type checks...
+=================================================================
+
+...and *null* for clearing a field **value**
+============================================
+
+If an object shouldn't have a field at all **delete** it, don't set it to *undefined*
+=====================================================================================
+
+`Otherwise, field will still be enumerable`:small:
+==================================================
+
+.. class:: tiny incremental
+
+| var harry {
+|   youthfulInnocenceAndSenseOfChildlikeWonder = { ... },
+|   wand: { ... }
+| }
+| function bookThree() {
+|   delete harry.youthfulInnocenceAndSenseOfChildlikeWonder;
+| };
+| bookThree();
+| for ( n in harry ) {
+|   alert(n + ': ' + harry[n] + '');
+| } // => 'wand: [Object object]'
+
+Functions
+=========
+
+.. class:: tiny
+
+[F]unctions are objects, they can be used like any other value. Functions can be stored in variables, objects, and arrays. Functions can be passed as arguments to functions, and functions can be returned from functions. Also, since functions are objects, functions can have methods... The thing that is special about functions is that they can be invoked.
+
+  -- `Crockford`__
+
+  __ http://www.amazon.com/JavaScript-Good-Parts-Douglas-Crockford/dp/0596517742/ref=sr_1_1?ie=UTF8&s=books&qid=1254634809&sr=8-1
+
+Function Literals - Anonymous Example
+=====================================
+
+.. class:: small incremental
+
+| var doMagic = function (wand) {
+|   wand.wiggle();
+| };
+
+Basically the same as...
+========================
+
+.. class:: small incremental
+
+| function doMagic(wand) {
+|   wand.wiggle();
+| };
+
+In fact, it's really quite confusing
+====================================
+
+.. class:: small incremental
+
+| var doMagic = function (wand) {
+|   alert("Poof!");
+| };
+| function doMagic(wand) {
+|   alert("Pow!");
+| };
+| doMagic();  // => "Poof!"
+
+Function Invocation
+===================
+
+All varargs, all the time
+=========================
+
+Use special *arguments* var to get at the actual params passed
+==============================================================
+
+`It's sort of array, but not.`
+
+Can be useful for exploring occassionally underdocumented APIs
+==============================================================
+
+`Fluid, I'm looking at you`
+
+Actually, Fluid might in fact be over-documented, but that's another topic...
+=============================================================================
+
+**caller** and **callee**
+=========================
+
+`Really helpful for debugging on shit platforms.`
+`Ahem.`
+
+`E.g. to build a stack trace:`:small:
+=====================================
+
+.. class:: tiny incremental
+
+| function stackTrace() {
+|   var frames = [];
+|   var caller = arguments.callee.caller;
+|   while(caller) {
+|     var callerName = caller.toString().match(/function (\w*)/)[1];
+|     frames.push(callerName ? callerName : 'anonymous');
+|     caller = caller.caller;
+|   }
+|   return frames.join('\\n');
+| };
+
+The evil *this*
+===============
+
+`Well, maybe not evil.`
+
+`But definitely confusing.`
+
+*this* is a special implicit arg passed to all functions
+==========================================================
+
+*this* semantics are dependent on how the current function was invoked
+======================================================================
+
+Method invocation style
+=======================
+
+`Binds *this* to the current object`
+
+Like invoking a Java instance method
+====================================
+
+.. class:: tiny incremental
+
+| var harry = {
+|   wand: { ... },
+|   doMagic: function() {
+|     this.wand.pointAndWiggle();
+|   }
+| };
+| harry.doMagic();
+
+Function invocation style
+=========================
+
+`Binds *this* to the global object`
+
+Mostly understandable in a simple case
+======================================
+
+.. class:: tiny incremental
+
+| var globalHarry = {
+|   wand: { ... }
+| };
+| doMagic = function() {
+|   this.globalHarry.wand.pointAndWiggle();
+| };
+| doMagic();
+
+`But private functions...`:small:
+=================================
+
+.. class:: tiny incremental
+
+| var harry = {
+|   wand: { ... },
+|   doMagic: function() {
+|     var point = function() {
+|       this.wand.point();  // fail!
+|     }
+|     var wiggle = function() {
+|       this.wand.wiggle();  // fail!
+|     }
+|     point();
+|     wiggle();
+|   }
+| };
+| harry.doMagic();
+
+Constructor invocation
+======================
+
+`Binds *this* to an implicitly created object`
+
+`Generally discouraged (by Crockford, anyway)`
+
+`Conventionally, such functions are named like Java classes`:small:
+===================================================================
+
+.. class:: tiny incremental
+
+| var Harry = function(wand) {
+|   this.wand = wand;
+| };
+| Harry.prototype.doMagic = function() {
+|   this.wand.pointAndWiggle();
+| };
+| var myHarry = new Harry({ ... });
+
+Apply invocation
+================
+
+`Binds this to whatever the caller specifies.`
+
+Chaos ensues...
+===============
+
+.. class:: tiny incremental
+
+| var harry = {
+|   wand: { ... },
+|   doMagic: function() {
+|     this.wand.pointAndWiggle();
+|   }
+| };
+| var hermione = {
+|   wand: { ... }
+| }
+| harry.doMagic.apply(hermione);
+
+jQuery is a more reasonable example
+===================================
+
+.. class:: tiny incremental
+
+| $('.selector').each(function() {
+|   $(this).click();
+| });
+
+`Inheritance`:orange:
+=====================
+
+JS has "prototypal" rather than "classical" inheritance
+=======================================================
+
+For a detailed and entertaining writeup of the history of the idea:
+===================================================================
+
+http://steve-yegge.blogspot.com/2008/10/universal-design-pattern.html
+
+In JS, instances are linked together, not classes/types
+=======================================================
+
+`And those instances and links can be changed whenever`
+
+`If a referenced field isn't present on an object, JS searches into a parent object`:small:
+===========================================================================================
+
+The parent is called a "prototype"
+==================================
+
+The prototype can be modified at any time
+=========================================
+
+`So to add a function to all new and existing arrays:`:small:
+=============================================================
+
+.. class:: tiny incremental
+
+| Array.prototype.avg = function() {
+|   var sum = 0;
+|   for ( var i = 0; i < this.length; i++) {
+|     if ( typeof this[i] === 'number' ) sum += this[i];
+|   }
+|   return sum / this.length;
+| };
+| var toAvg = [ 2, 4, 6 ];
+| alert(toAvg.avg());  // => 4
+
+If sufficiently determined, you can make this look like Java inheritance
+========================================================================
+
+`Wizards are Humans, plus`:small:
+=================================
+
+.. class:: tiny incremental
+
+| var Human = function(name) {
+|   this.name = name;
+| }
+| Human.prototype.greetings = function() {
+|   return "Hi, my name is " + this.name;
+| };
+| var Wizard = function(name) {
+|   this.name = name;
+| };
+| Wizard.prototype = new Human();
+| Wizard.prototype.doMagic = function() {
+|   return this.greetings() + ". Ta-da!";
+| };
+| new Wizard("Harry").doMagic(); // => "Hi, my name is Harry. Ta-da!"
+
+Weird, huh?
+===========
+
+Also, don't accidentally call Human() or Wizard() without *new*
+===============================================================
+
+`...else this is bound to the global object`
+
+`Crockford has a simpler approach`:small:
+=========================================
+
+.. class:: tiny incremental
+
+| Object.beget = function (o) {
+|   var F = function () {};
+|   F.prototype = o;
+|   return new F();
+| };
+
+Now you can use simple objects as templates
+===========================================
+
+`First create a template human object`:small:
+=============================================
+
+.. class:: tiny incremental
+
+| var human = {
+|   name: 'Anony Mous',
+|   greetings: function() {
+|     return "Hi, my name is " + this.name;
+|   }
+| };
+
+`Then derive a wizard from that *instance*`:small:
+==================================================
+
+.. class:: tiny incremental
+
+| var wizard = Object.beget(human);
+| wizard.doMagic = function() {
+|   return this.greetings() + ". Ta-da!";
+| };
+| var harry = Object.beget(wizard);
+| harry.name = "Harry";
+| human.greetings(); // => Hi, my name is Anony Mous
+| human.doMagic();   // => error
+| wizard.greetings();  // => Hi, my name is Anony Mous.
+| wizard.doMagic();  // => Hi, my name is Anony Mous. Ta-da!
+| harry.doMagic();   // => "Hi, my name is Harry. Ta-da!"
+
+`Crockford also proposes a purely functional approach`:small:
+=============================================================
+
+.. class:: small incremental
+
+| `Also called the "module pattern"`
+| `Adds a notion of private fields`
+| `Pervasive approach in the Fluid framework`
+| `Actually looks more like a traditional OO approach than others`
+
+Continuing with our example...
+==============================
+
+Change human to a function
+==========================
+
+.. class:: tiny incremental
+
+| var human = function(name) {
+|   var that = {};
+|   var greetings = function() {
+|     return "Hi, my name is " + this.name;
+|   };
+|   that.greetings = greetings;
+|   return that;
+| };
+
+`Then creating a wizard looks lot like a subclass constructor in Java`:small:
+=============================================================================
+
+.. class:: tiny incremental
+
+| var wizard = function(name) {
+|   var that = human(name);
+|   that.doMagic = function() {
+|     return that.greetings() + ". Ta-da!";
+|   };
+|   return that;
+| }
+| var harry = wizard('Harry');
+| harry.doMagic();   // => "Hi, my name is Harry. Ta-da!"
+
+
+Fluid will strongly encourage you to structure your code like this.
+===================================================================
+
+Can be a huge help in bringing order to the Wild West of JS coding
+==================================================================
+
+Once you realize there's just not much to it, it's really quite liberating
+==========================================================================
+
+And it lets you think about your JS code in ways Spring programmers are familiar with
+=====================================================================================
+
+Fluid claims to be lightweight DI, but it's really just lightweight polymorphism.
+=================================================================================
+
+Collaborators are called 'sub-components'
+=========================================
+
+You declare 'types' for sub-components, which are just function names
+=====================================================================
+
+`So, Wizards might have (private) Fluid-managed nemeses:`:small:
+================================================================
+
+.. class:: tiny incremental
+
+| var wizard = function(options) {
+|   var that = human(options.name);
+|   that.options = options;
+|   var nemesis = fluid.initSubcomponent(that, "nemesis",
+|          [fluid.COMPONENT_OPTIONS]);
+|   that.doMagic = function() {
+|     nemesis.foilPlot();
+|   };
+|   return that;
+| };
+
+
+`voldemort() can be a nemesis b/c it returns an obj with a foilPlot() method`:small:
+====================================================================================
+
+.. class:: tiny incremental
+
+| var voldemort = function(options) {
+|   var that = fluid.initView("voldemort", null, options);
+|   that.foilPlot = function() {
+|     return "Gar. Foiled again.";
+|   };
+| };
+
+`"Inject" voldemort with simple JS object`:small:
+=================================================
+
+.. class:: tiny incremental
+
+| var myWizard = wizard({
+|   nemesis: {
+|     type: 'voldemort',
+|     options: {
+|       // options for Lord V
+|     }
+|   }
+| });
+
+Check out the Fluid wiki for more examples and features, including config defaulting
+====================================================================================
+
+`Debugging`:orange:
+===================
+
+Used to be impossible
+=====================
+
+Still pretty much is in IE
+==========================
+
+`Even in 8, though it's getting better`
+
+Firebug: it's your friend
+=========================
+
+`Theoretically can run a lite version against IE`
+
+It's got an interactive debugger similar to what you've gotten used to in Eclipse
+=================================================================================
+
+Beware, sometimes the thing just goes haywire
+=============================================
+
+FB Console API
+==============
+
+http://getfirebug.com/console.html
+
+Really nice b/c logged JS objects can be exploded into nice browseable trees
+============================================================================
+
+.. class:: tiny incremental
+
+| console.debug("Look at these three objects: ", obj1, obj2, obj3);
+
+Remember FB will display current obj state, which might have changed since debug()
+==================================================================================
+
+Of course, IE7 doesn't have it at all
+=====================================
+
+And I think IE8's is different (and not, like, in a good way).
+==============================================================
+
+JSLint
+======
+
+`Shocking how easily it fixes some IE problems, e.g. extra commas`
+
+`If you're using Aptana, just turn it on. All the time.`
+
+`Testing`:orange:
+=================
+
+Yeah, I'm not really too sure
+
+QUnit is nice and simple
+========================
+
+And Fluid's DI mechanism helps testability
+==========================================
+
+Never really found a good way to test JS interaction with the actual markup
+===========================================================================
+
+For that, there's always Selenium
+=================================
+
+WebDriver also looks (more) promising
+=====================================
+
+And there's like a gagillion JS testing frameworks
+==================================================
+
+Which is probably part of the problem
+=====================================
+
+`That's it`:orange:
+===================
+
+Go forth and write Javascript
+=============================
+
+But not too much
+================
